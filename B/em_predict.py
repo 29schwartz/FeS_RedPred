@@ -324,6 +324,9 @@ for estimator in name_models:
     best_model = optEstimator.fit(X2, y)
     best_params = best_model.best_params_
 
+    import joblib
+    joblib.dump(best_model.best_estimator_, f"{estimator}_model.joblib")
+
     # feature selection
     if estimator in models_with_fs:
         alphaTot = best_model.best_params_[
