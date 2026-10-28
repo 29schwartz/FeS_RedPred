@@ -324,8 +324,25 @@ for estimator in name_models:
     best_model = optEstimator.fit(X2, y)
     best_params = best_model.best_params_
 
+    fitted_pipeline = best_model.best_estimator_
+
     import joblib
-    joblib.dump(best_model.best_estimator_, f"{estimator}_model.joblib")
+
+    # Separate XGBoost native saving from standard scikit-learn models
+    if "xgb" in str(type(fitted_pipeline.named_steps["regressor"])).lower():
+        # 1. Save the fitted XGBoost regressor as JSON
+        xgb_model = fitted_pipeline.named_steps["regressor"]
+        xgb_model.save_model("xgboost_model.json")
+
+        # 2. Save the preceding preprocessing steps (scaler, feature selection)
+        preprocessor = fitted_pipeline[:-1]
+        joblib.dump(preprocessor, "xgboost_preprocessor.joblib")
+
+        print("Saved XGBoost model as 'xgboost_model.json' and preprocessor as 'xgboost_preprocessor.joblib'")
+    else:
+        # Non-XGBoost models (SVR, RandomForest, LightGBM) save cleanly via joblib
+        joblib.dump(fitted_pipeline, f"{estimator}_pipeline.joblib")
+        print(f"Saved pipeline as '{estimator}_pipeline.joblib'")
 
     # feature selection
     if estimator in models_with_fs:
