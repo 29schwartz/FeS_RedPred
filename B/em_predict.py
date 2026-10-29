@@ -324,8 +324,20 @@ for estimator in name_models:
     best_model = optEstimator.fit(X2, y)
     best_params = best_model.best_params_
 
-    import joblib
-    joblib.dump(best_model.best_estimator_, f"{estimator}_model.joblib")
+    import dill
+
+    # Bundle preprocessing transformers with the final model
+    model_bundle = {
+        "imputer": fillph,
+        "rhcf": remove_hcf,
+        "scaler": sc if estimator in models_with_scaling else None,
+        "model": best_model.best_estimator_,
+        "feature_names": list(df_pm.columns[1:])
+    }
+    
+    # Save bundle
+    with open(f"{estimator}_full_pipeline.pkl", "wb") as f:
+        dill.dump(model_bundle, f)
 
     # feature selection
     if estimator in models_with_fs:
